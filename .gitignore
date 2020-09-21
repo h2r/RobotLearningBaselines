@@ -1,5 +1,7 @@
 #RLBench files
 h2r_rlbench_fork/
+assets/
+*.pkl
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
