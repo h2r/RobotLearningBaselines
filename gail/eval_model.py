@@ -41,7 +41,7 @@ env = gym.make(args.env_name, render_mode='human')
 #env.seed(args.seed)
 
 """define actor and critic"""
-policy, _, _ = pickle.load(open(os.path.join(assets_dir(), 'learned_models/{}_{}.p'.format(args.env_name, args.version)), 'rb'))
+policy, _, _ = pickle.load(open(os.path.join(assets_dir(), 'learned_models/{}-{}.p'.format(args.env_name, args.version)), 'rb'))
 policy.eval()
 def main_loop():
     num_pressed = 0

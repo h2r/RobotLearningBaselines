@@ -14,7 +14,7 @@ A repository containing algorithms + trained weights for common robot learning b
 
 ## Training a model
 1. Depending on the learning method you want to use, a different script can (currently) be found under the `gail` folder.
-2. Sample command: `python gail/bc_gym.py --env-name push_button-state-v0 --expert-traj-path /tmp/rlbench_data/push_button --save-model-interval 250 --gpu-index 0 --max-iter-num 100000 --l2-reg 0.00005 --version bc_button1000_newloss_16 -lc 0.000 -l2 1`
+2. Sample command: `python gail/bc_gym.py --env-name push_button-state-v0 --expert-traj-path /tmp/rlbench_data/push_button --save-model-interval 250 --gpu-index 0 --max-iter-num 100000 --l2-reg 0.00005 --version bc_button1000_sean_params_lc0.0005_la2 -lc 0.0005 -l2 1 --l2-reg 0 -la 2`
 
 ## Evaluating and visualizing performance of trained weights
 1. Currently, the file being used for eval is `gail/eval_model.py`
