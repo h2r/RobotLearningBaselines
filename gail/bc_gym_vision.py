@@ -84,8 +84,12 @@ print('Data Setup')
 smoothing = 5
 
 expert_traj = [sorted(glob(paths+'/*'), key=key) for paths in glob(args.expert_traj_path+'/*')]
+
+# from IPython import embed; embed()
+
 expert_traj = [[pickle.load(open(path, mode='rb')) for path in paths] for paths in expert_traj]
 
+# from IPython import embed; embed()
 state_dim = (expert_traj[0][0].get_low_dim_data().shape[0], expert_traj[0][0].front_rgb.shape)
 action_dim = np.hstack([expert_traj[0][0].gripper_pose, expert_traj[0][0].gripper_open]).shape[0]
 
@@ -113,7 +117,7 @@ criterion = BehaviorCloneLoss(args.lambda_l2, args.lambda_l1, args.lambda_c, arg
 to_device(device, policy_net)
 
 optimizer_policy = torch.optim.Adam(policy_net.parameters(), lr=args.learning_rate, weight_decay=args.l2_reg)
-
+optimizer_scheduler = torch.optim.lr_scheduler.StepLR(optimizer_policy, 10000)
 
 print(policy_net)
 print(args)
@@ -160,5 +164,6 @@ for i_iter in range(1, args.max_iter_num+1):
         pickle.dump((policy_net, {}, {}), open(os.path.join(assets_dir(), 'learned_models/{}_{}/{}.p'.format(args.env_name, args.version, i_iter)), 'wb'))
         to_device(device, policy_net)
 
+    optimizer_scheduler.step()
     """clean up gpu memory"""
     torch.cuda.empty_cache()

@@ -62,7 +62,7 @@ def pose_dif(end, start):
     return dif
 
 
-parser = argparse.ArgumentParser(description='PyTorch GAIL example')
+parser = argparse.ArgumentParser(description='PyTorch Behavior Cloning with RLBench')
 parser.add_argument('--env-name', default="hit_ball_with_queue", metavar='G',
                     help='name of the environment to run')
 parser.add_argument('--version', default="bc", metavar='G',
@@ -128,15 +128,16 @@ torch.manual_seed(args.seed)
 
 """define actor and critic"""
 policy_net = Policy(state_dim, action_dim, activation='relu')
+# policy_net = Policy(state_dim, action_dim, activation='tanh')
 criterion = BehaviorCloneLoss(args.lambda_l2, args.lambda_l1, args.lambda_c, args.lambda_aux)
 to_device(device, policy_net)
 
 optimizer_policy = torch.optim.Adam(policy_net.parameters(), lr=args.learning_rate, weight_decay=args.l2_reg)
-
+optimizer_scheduler = torch.optim.lr_scheduler.StepLR(optimizer_policy, 10000)
+# optimizer_scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer_policy, 0.95)
 
 print(policy_net)
 print(args)
-
 
 print('Setup complete, beginning training.')
 n_batches_train = math.ceil(train_data.shape[0] / args.batch_size)
@@ -184,5 +185,7 @@ for i_iter in range(1, args.max_iter_num+1):
         pickle.dump((policy_net, {}, {}), open(os.path.join(assets_dir(), 'learned_models/{}_{}/{}.p'.format(args.env_name, args.version, i_iter)), 'wb'))
         to_device(device, policy_net)
 
+
+    optimizer_scheduler.step()
     """clean up gpu memory"""
     torch.cuda.empty_cache()

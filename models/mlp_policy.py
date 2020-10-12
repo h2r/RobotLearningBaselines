@@ -37,13 +37,13 @@ class Policy(nn.Module):
         action_log_std = self.action_log_std.expand_as(action_mean)
         action_std = torch.exp(action_log_std)
 
-        #'''
+        # Here, we're just normalizing the Quaternion to be unit magnitude so that 
+        # RLBench's motion planner doesn't complain
         norma = torch.tanh(action_mean[:, 3:7])
         norm = norma*norma
         norm = norm.sum(dim=1, keepdim=True)
         norm = norm.sqrt()
         action_mean = torch.cat([action_mean[:, :3], norma/norm, torch.sigmoid(action_mean[:, 7:])], dim=1)
-        #'''
 
         return action_mean, action_log_std, action_std
 
@@ -85,8 +85,7 @@ class VisionPolicy(nn.Module):
     def __init__(self, state_dim, action_dim, hidden_size=(128,128,128)):
         super().__init__()
         self.activation = nn.ReLU()
-
-
+        
         self.conv1 = CoordConv2d(3,   32,  kernel_size=5, stride=2, batch_norm=True, attend=0,   use_coords=False, dropout=.2)
         self.conv2 = CoordConv2d(32,  32,  kernel_size=3, stride=1, batch_norm=True, attend=0,   use_coords=False, dropout=.2)
         self.conv3 = CoordConv2d(32,  64,  kernel_size=3, stride=2, batch_norm=True, attend=0,   use_coords=False, dropout=.2)

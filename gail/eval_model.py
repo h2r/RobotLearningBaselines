@@ -14,12 +14,13 @@ from utils import *
 
 
 parser = argparse.ArgumentParser(description='PyTorch GAIL example')
-parser.add_argument('--env-name', default="hit_ball_with_queue", metavar='G',
-                    help='name of the environment to run')
+parser.add_argument('--env-name', default="push_button-state-v0", metavar='G',
+                    help=("name of the environment to run. IMPORTANT: specify state or" 
+                    "vision here; eg. push_button-state-v0 vs push_button-vision-v0"))
 parser.add_argument('--mode', default="state", metavar='G',
                     help='name of the environment to run')
-parser.add_argument('--version', default="bc", metavar='G',
-                    help='version of weights to load')
+parser.add_argument('--weights-location', default="bc", metavar='G',
+                    help='relative folder name within assets dir of weights to load')
 parser.add_argument('--seed', type=int, default=1, metavar='N',
                     help='random seed (default: 1)')
 parser.add_argument('--max-iter-num', type=int, default=500, metavar='N',
@@ -41,7 +42,7 @@ env = gym.make(args.env_name, render_mode='human')
 #env.seed(args.seed)
 
 """define actor and critic"""
-policy, _, _ = pickle.load(open(os.path.join(assets_dir(), 'learned_models/{}-{}.p'.format(args.env_name, args.version)), 'rb'))
+policy, _, _ = pickle.load(open(os.path.join(assets_dir(), 'learned_models/{}.p'.format(args.version)), 'rb'))
 policy.eval()
 def main_loop():
     num_pressed = 0
@@ -54,9 +55,11 @@ def main_loop():
             i_step = 0
             while not done and i_step < 100:
                 if args.mode == 'vision':
+                    # from IPython import embed; embed()
                     state_var = (tensor(state['state']).unsqueeze(0), tensor(state['front_rgb']).permute(2, 1, 0).unsqueeze(0).type(dtype))
                     action = policy(*state_var)[0][0].numpy()
                 else:
+                    # from IPython import embed; embed()
                     state_var = tensor(state).unsqueeze(0)
                     action = policy(state_var)[0][0].numpy()
 
