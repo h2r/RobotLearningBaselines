@@ -4,6 +4,7 @@ import sys
 sys.path.remove('/home/nishanth/Desktop/RobotLearningBaselines/utils')
 import datetime
 from pympler import asizeof
+import pyarrow as pa
 import lmdb
 import gym
 import rlbench.gym
@@ -17,6 +18,9 @@ import numpy as np
 
 # IMPORTANT: Currently, this script is only intended to work for datasets including vision data
 # Do not use it on datasets that only take the 51D proprioceptive state.
+
+def serialize_pyarrow(obj):
+    return pa.serialize(obj).to_buffer()
 
 def key(x):
     return int(x[x.rfind('/')+1:x.rfind('.')])
@@ -32,6 +36,7 @@ def make_lmdb(mode, trajs):
 
     lmdb_path = os.path.join(args.save_path, "{}.lmdb".format(mode))
     isdir = os.path.isdir(lmdb_path)
+    key_list = []
 
     with lmdb.open(lmdb_path, subdir=isdir, map_size=1099511627776 * 2,
         readonly=False, meminit=False, map_async=True) as db:
@@ -45,7 +50,13 @@ def make_lmdb(mode, trajs):
                 trajectory = int(m.group(1))
                 timestep = int(m.group(2))
                 lmdb_key = (trajectory, timestep)
+                key_list.append(lmdb_key)
+                # Put the key,value pair into the lmdb
                 txn.put(str(lmdb_key).encode('utf-8'), pickle.dumps(expert_traj_data))
+        # Additionally, put the list of keys and its length into the lmdb
+        # We will need easy access to this for training/testing via a PyTorch DataLoader
+        txn.put(b'__keys__', serialize_pyarrow(key_list))
+        txn.put(b'__len__', serialize_pyarrow(len(key_list)))
     db.close()
 
 
