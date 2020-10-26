@@ -1,5 +1,5 @@
 import sys
-sys.path.remove('/home/nishanth/Desktop/RobotLearningBaselines/utils')
+# sys.path.remove('/home/nishanth/Desktop/RobotLearningBaselines/utils')
 import torch
 from torch.utils.data import Dataset
 
@@ -15,9 +15,9 @@ import random
 class ImitationLMDBWithVision(Dataset):
     def __init__(self, dest, mode):
         super(ImitationLMDBWithVision, self).__init__()
-        lmdb_file = osp.join(dest, mode+".lmdb")
+        lmdb_file = osp.join(dest, mode+".lmdb")        
         # Open the LMDB file
-        self.env = lmdb.open(lmdb_file, subdir=osp.isdir(lmdb_file),
+        self.env = lmdb.open(lmdb_file, subdir=False,
                              readonly=True, lock=False,
                              readahead=False, meminit=False)
 

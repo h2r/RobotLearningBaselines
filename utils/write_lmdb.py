@@ -50,14 +50,20 @@ def make_lmdb(mode, trajs):
                 trajectory = int(m.group(1))
                 timestep = int(m.group(2))
                 lmdb_key = (trajectory, timestep)
+                print(expert_traj_data)
                 key_list.append(lmdb_key)
                 # Put the key,value pair into the lmdb
                 txn.put(str(lmdb_key).encode('utf-8'), pickle.dumps(expert_traj_data))
+                txn.commit()
+                txn = db.begin(write=True)
         # Additionally, put the list of keys and its length into the lmdb
         # We will need easy access to this for training/testing via a PyTorch DataLoader
         txn.put(b'__keys__', serialize_pyarrow(key_list))
         txn.put(b'__len__', serialize_pyarrow(len(key_list)))
-    db.close()
+        txn.commit()
+        print('put keys and len!!!')
+        db.sync()
+        # db.close()
 
 
 parser = argparse.ArgumentParser(description='Script to convert a dataset into an LMDB to enable efficient I/O and low memory usage')

@@ -1,0 +1,7 @@
+{
+    "python.pythonPath": "/home/nishanth/miniconda3/envs/py3_pytorch_cuda10/bin/python",
+    "terminal.integrated.env.linux": {
+		"PATH": ""
+},
+"python.dataScience.jupyterServerURI": "local"
+}
