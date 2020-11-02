@@ -24,9 +24,9 @@ class BehaviorCloneLoss(nn.Module):
         self.lamb_l1 = lamb_l1
         self.lamb_c = lamb_c
         self.lamb_aux = lamb_aux
-        self.l2 = nn.MSELoss()
-        self.l1 = nn.L1Loss()
-        self.aux = nn.MSELoss()
+        self.l2 = nn.MSELoss(reduction='sum')
+        self.l1 = nn.L1Loss(reduction='sum')
+        self.aux = nn.MSELoss(reduction='sum')
 
         self.eps = eps
 
@@ -53,7 +53,7 @@ class BehaviorCloneLoss(nn.Module):
         den = torch.norm(ctarget,p=2,dim=1) * torch.norm(cout,p=2,dim=1) + self.eps
         div = num / den
         a_cos = torch.acos(torch.clamp(div, -1 + self.eps, 1 - self.eps))
-        c_loss = torch.mean(a_cos)
+        c_loss = torch.sum(a_cos)
         # For the aux loss
         #aux_loss = self.aux(aux_out, aux_target)
 

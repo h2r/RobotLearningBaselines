@@ -6,6 +6,7 @@ import sys
 import pickle
 import time
 import math
+import torch
 from glob import glob
 import numpy as np
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -89,38 +90,28 @@ smoothing = 5
 print('Retrieving train and test LMDB datasets')
 modes = ['train', 'test']
 dataset_dict = {mode: ImitationLMDBWithVision(args.expert_traj_path, mode) for mode in modes}
-dataloaders = {mode: DataLoader(dataset_dict[mode], batch_size=args.batch_size, shuffle=True, num_workers=8, pin_memory=True) for mode in modes}
+
+# We make 2 dataloaders: one that we will actually use and a second one that is needed to just get one datapoint
+# to find the dimensions with which the tensors of this data were saved
+dataloaders_real = {mode: DataLoader(dataset_dict[mode], batch_size=args.batch_size, shuffle=True, num_workers=8, pin_memory=True) for mode in modes}
+dataloader_size1 = DataLoader(dataset_dict[modes[0]], batch_size=1, shuffle=False, num_workers=8, pin_memory=True)
 data_sizes = {mode: len(dataset_dict[mode]) for mode in modes}
 
-from IPython import embed; embed()
+# We load a sample datapoint from the size1 dataloader to compute the state and action dims
+sample_datapoint = next(iter(dataloader_size1))
+# Each element of the dataset is a 4-element list containing the [low_dim_data, front_rgb, gripper_pose, gripper_open]
+# state_dim = (sample_datapoint[0].shape[0], sample_datapoint[1].shape)
+# action_dim = np.hstack([expert_traj[0][0].gripper_pose, expert_traj[0][0].gripper_open]).shape[0]
+action_dim = np.hstack([torch.squeeze(sample_datapoint[2]), sample_datapoint[3]]).shape[0]
 
-# expert_traj = [sorted(glob(paths+'/*'), key=key) for paths in glob(args.expert_traj_path+'/*')]
+print('LMDB Data Setup Complete, beginning Model Setup')
 
-# expert_traj = [[pickle.load(open(path, mode='rb')) for path in paths] for paths in expert_traj]
-
-state_dim = (expert_traj[0][0].get_low_dim_data().shape[0], expert_traj[0][0].front_rgb.shape)
-action_dim = np.hstack([expert_traj[0][0].gripper_pose, expert_traj[0][0].gripper_open]).shape[0]
-
-expert_traj = [[[obs.get_low_dim_data(), obs.front_rgb, obs.gripper_pose, obs.gripper_open] for obs in traj] for traj in expert_traj]
-expert_traj = [np.hstack([traj[i][0], traj[i][1].flatten(), pose_dif(traj[i+min(smoothing, len(traj)-i-1)][2], traj[i][2]), traj[i+min(smoothing, len(traj)-i-1)][3]]) for traj in expert_traj for i in range(len(traj))]
-#expert_traj = [np.hstack([traj[i][0], traj[i+min(3, len(traj)-i-1)][1], traj[i+min(3, len(traj)-i-1)][2]]) for traj in expert_traj for i in range(len(traj))]
-expert_traj = np.vstack(expert_traj)
-expert_traj = torch.from_numpy(expert_traj).type(dtype)
-train_data = expert_traj[:-1*expert_traj.shape[0]//10]
-test_data  = expert_traj[-1*expert_traj.shape[0]//10:]
-print(train_data.shape[0])
-print(test_data.shape[0])
-
-#print(expert_traj.mean(dim=0))
-#print(expert_traj.std(dim=0))
-
-print('Data Setup Complete')
 """seeding"""
 np.random.seed(args.seed)
 torch.manual_seed(args.seed)
 
 """define actor and critic"""
-policy_net = VisionPolicy(state_dim, action_dim)
+policy_net = VisionPolicy(action_dim)
 criterion = BehaviorCloneLoss(args.lambda_l2, args.lambda_l1, args.lambda_c, args.lambda_aux)
 to_device(device, policy_net)
 
@@ -131,37 +122,43 @@ print(policy_net)
 print(args)
 
 
-print('Setup complete, beginning training.')
-n_batches_train = math.ceil(train_data.shape[0] / args.batch_size)
-n_batches_test = math.ceil(test_data.shape[0] / args.batch_size)
+print('Model Setup complete, beginning training.')
+# n_batches_train = math.ceil(train_data.shape[0] / args.batch_size)
+# n_batches_test = math.ceil(test_data.shape[0] / args.batch_size)
+
 for i_iter in range(1, args.max_iter_num+1):
     train_loss = 0
     test_loss = 0
-    id = torch.randperm(train_data.shape[0])
-    train_data = train_data[id]
+    # id = torch.randperm(train_data.shape[0])
+    # train_data = train_data[id]
     policy_net.train()
-    for i_batch in range(n_batches_train):
+    for batch in dataloaders_real['train']:
         optimizer_policy.zero_grad()
-        batch_inds = slice(i_batch*args.batch_size, (i_batch+1)*args.batch_size)
-        batch = train_data[batch_inds].to(device)
-        batch_ins = (batch[:, :state_dim[0]], batch[:, state_dim[0]:-action_dim].view(-1, *state_dim[1]).permute(0, 3, 1, 2))
-        batch_outs = batch[:, -action_dim:]
-        policy_outs, _, _ = policy_net(*batch_ins)
+        batch = [_batch.type(torch.DoubleTensor) for _batch in batch]
+        batch = [_batch.to(device) for _batch in batch]
+        batch_ins = batch[1].permute(0, 3, 1, 2)
+        batch_outs = torch.cat((batch[2], torch.unsqueeze(batch[3],1)), -1)
+        policy_outs, _, _ = policy_net(batch_ins)
         loss = criterion(policy_outs, batch_outs)
         loss.backward()
         optimizer_policy.step()
-        train_loss += loss.item() * batch.shape[0] / train_data.shape[0]
+        train_loss += loss.item() / data_sizes['train']
+        # print(train_loss)
+
 
     policy_net.eval()
     with torch.no_grad():
-        for i_batch in range(n_batches_test):
-            batch_inds = slice(i_batch*args.batch_size, (i_batch+1)*args.batch_size)
-            batch = test_data[batch_inds].to(device)
-            batch_ins = (batch[:, :state_dim[0]], batch[:, state_dim[0]:-action_dim].view(-1, *state_dim[1]).permute(0, 3, 1, 2))
-            batch_outs = batch[:, -action_dim:]
-            policy_outs, _, _ = policy_net(*batch_ins, b_print=i_batch==0)
-            loss = criterion(policy_outs, batch_outs)#, i_batch == 0)
-            test_loss += loss.item() * batch.shape[0] / test_data.shape[0]
+        i_batch = 0
+        for batch in dataloaders_real['test']:
+            batch = [_batch.type(torch.DoubleTensor) for _batch in batch]
+            batch = [_batch.to(device) for _batch in batch]
+            batch_ins = batch[1].permute(0, 3, 1, 2)
+            batch_outs = torch.cat((batch[2], torch.unsqueeze(batch[3],1)), -1)
+            policy_outs, _, _ = policy_net(batch_ins)
+            loss = criterion(policy_outs, batch_outs)
+            test_loss += loss.item() / data_sizes['test']
+            i_batch += 1
+
 
     if i_iter % args.log_interval == 0:
         print('{}\ttrain_loss {:.5f}\ttest_loss {:.5f}'.format(

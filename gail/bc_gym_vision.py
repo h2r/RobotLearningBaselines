@@ -137,6 +137,7 @@ for i_iter in range(1, args.max_iter_num+1):
         batch_inds = slice(i_batch*args.batch_size, (i_batch+1)*args.batch_size)
         batch = train_data[batch_inds].to(device)
         batch_ins = (batch[:, :state_dim[0]], batch[:, state_dim[0]:-action_dim].view(-1, *state_dim[1]).permute(0, 3, 1, 2))
+        # from IPython import embed; embed()
         batch_outs = batch[:, -action_dim:]
         policy_outs, _, _ = policy_net(*batch_ins)
         loss = criterion(policy_outs, batch_outs)

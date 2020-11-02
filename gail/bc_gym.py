@@ -162,7 +162,7 @@ for i_iter in range(1, args.max_iter_num+1):
         loss = criterion(policy_outs, batch_outs)
         loss.backward()
         optimizer_policy.step()
-        train_loss += loss.item() * batch.shape[0] / train_data.shape[0]
+        train_loss += loss.item() / train_data.shape[0]
 
     policy_net.eval()
     with torch.no_grad():
@@ -174,7 +174,7 @@ for i_iter in range(1, args.max_iter_num+1):
             policy_outs, _, _ = policy_net(batch_ins)
             #loss = criterion(policy_outs[:3], batch_outs[:3])
             loss = criterion(policy_outs, batch_outs)#, i_batch == 0)
-            test_loss += loss.item() * batch.shape[0] / test_data.shape[0]
+            test_loss += loss.item() / test_data.shape[0]
 
     if i_iter % args.log_interval == 0:
         print('{}\ttrain_loss {:.5f}\ttest_loss {:.5f}'.format(

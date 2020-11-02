@@ -42,7 +42,7 @@ env = gym.make(args.env_name, render_mode='human')
 #env.seed(args.seed)
 
 """define actor and critic"""
-policy, _, _ = pickle.load(open(os.path.join(assets_dir(), 'learned_models/{}.p'.format(args.version)), 'rb'))
+policy, _, _ = pickle.load(open(os.path.join(assets_dir(), 'learned_models/{}.p'.format(args.weights_location)), 'rb'))
 policy.eval()
 def main_loop():
     num_pressed = 0
@@ -56,16 +56,20 @@ def main_loop():
             while not done and i_step < 100:
                 if args.mode == 'vision':
                     # from IPython import embed; embed()
-                    state_var = (tensor(state['state']).unsqueeze(0), tensor(state['front_rgb']).permute(2, 1, 0).unsqueeze(0).type(dtype))
-                    action = policy(*state_var)[0][0].numpy()
+                    # state_var = (tensor(state['state']).unsqueeze(0), tensor(state['front_rgb']).permute(2, 1, 0).unsqueeze(0).type(dtype))
+                    # from IPython import embed; embed()
+                    state_var = (tensor(state['front_rgb']).permute(2, 1, 0).unsqueeze(0).type(dtype))
+                    action = policy(state_var)[0][0].numpy()
                 else:
                     # from IPython import embed; embed()
                     state_var = tensor(state).unsqueeze(0)
                     action = policy(state_var)[0][0].numpy()
 
                 try:
+                    print(action)
                     state, _, done, _ = env.step(action)
                 except Exception:
+                    # print('Action output from your model was nonsensical - RIP')
                     break
                 #env.render()
                 i_step += 1

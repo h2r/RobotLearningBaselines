@@ -82,7 +82,7 @@ class Policy(nn.Module):
 
 
 class VisionPolicy(nn.Module):
-    def __init__(self, state_dim, action_dim, hidden_size=(128,128,128)):
+    def __init__(self, action_dim, hidden_size=(128,128,128)):
         super().__init__()
         self.activation = nn.ReLU()
         
@@ -109,8 +109,9 @@ class VisionPolicy(nn.Module):
                                  nn.Linear(512, aux_size, bias=use_bias))
         '''
 
-        self.fl1 = nn.Linear(512*2 + state_dim[0], 512)# + tau_size + aux_size
+        self.fl1 = nn.Linear(512*2, 512)# + tau_size + aux_size
         self.fl2 = nn.Linear(512, 512)
+        #
         self.output = nn.Linear(512, action_dim + 6)
 
 
@@ -124,7 +125,7 @@ class VisionPolicy(nn.Module):
         evs = torch.stack([torch.symeig(A[i], eigenvectors=True)[1][:, 0] for i in range(A.shape[0])])
         return evs
 
-    def forward(self, low_dim, vision, b_print=False):
+    def forward(self, vision, b_print=False):
         x = self.conv1(vision)
         x = self.conv2(x)
         x = self.conv3(x)
@@ -190,11 +191,12 @@ class VisionPolicy(nn.Module):
 
         #aux = self.aux(x)
 
-        x = self.dropout(self.activation(self.fl1(torch.cat([low_dim, x], dim=1))))# , aux.detach()
+        x = self.dropout(self.activation(self.fl1(x)))# , aux.detach()
         x = self.dropout(self.activation(self.fl2(x)))
         x = self.output(x)
 
         #'''
+        # FISHY! Dimensionality doesn't add up given definition....
         x = torch.cat([x[:, :3], self.A_vec_to_quat(x[:, 3:-1]), x[:, -1:]], dim=1)
         '''
         norma = torch.tanh(x[:, 3:7])
