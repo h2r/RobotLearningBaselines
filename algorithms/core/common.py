@@ -1,6 +1,12 @@
 import torch
-from utils import to_device
 
+import os
+import sys
+
+# We need this below line for Python to actually find the utils directory
+# Otherwise, the module is not in the Python path!
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+from utils import to_device
 
 def estimate_advantages(rewards, masks, values, gamma, tau, device):
     rewards, masks, values = to_device(torch.device('cpu'), rewards, masks, values)

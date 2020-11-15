@@ -8,10 +8,8 @@ import time
 from glob import glob
 import math
 import pdb
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from utils import *
-
 
 parser = argparse.ArgumentParser(description='PyTorch GAIL example')
 parser.add_argument('--env-name', default="push_button-state-v0", metavar='G',
@@ -59,6 +57,7 @@ def main_loop():
                     # state_var = (tensor(state['state']).unsqueeze(0), tensor(state['front_rgb']).permute(2, 1, 0).unsqueeze(0).type(dtype))
                     # from IPython import embed; embed()
                     state_var = (tensor(state['front_rgb']).permute(2, 1, 0).unsqueeze(0).type(dtype))
+                    # from IPython import embed; embed
                     action = policy(state_var)[0][0].numpy()
                 else:
                     # from IPython import embed; embed()

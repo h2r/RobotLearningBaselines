@@ -1,11 +1,16 @@
 import multiprocessing
-from utils.replay_memory import Memory
-from utils.torch import *
 import math
 import time
 import gym
 import rlbench.gym
+import os
+import sys
 
+# We need this below line for Python to actually find the utils directory
+# Otherwise, the module is not in the Python path!
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+from utils.torch import *
+from utils.replay_memory import Memory
 
 def collect_samples(pid, queue, env, policy, custom_reward,
                     mean_action, render, min_batch_size):

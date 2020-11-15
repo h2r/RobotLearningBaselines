@@ -1,7 +1,12 @@
 import numpy as np
 import scipy.optimize
-from utils import *
+import os
+import sys
 
+# We need this below line for Python to actually find the utils directory
+# Otherwise, the module is not in the Python path!
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+from utils import *
 
 def conjugate_gradients(Avp_f, b, nsteps, rdotr_tol=1e-10):
     x = zeros(b.size(), device=b.device)

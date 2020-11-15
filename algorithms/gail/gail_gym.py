@@ -5,19 +5,21 @@ import os
 import sys
 import pickle
 import time
+from torch import nn
 from glob import glob
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+# We need this below line for Python to actually find the utils directory
+# Otherwise, the module is not in the Python path!
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from utils import *
-from models.mlp_policy import Policy
-from models.mlp_critic import Value
-from models.mlp_policy_disc import DiscretePolicy
-from models.mlp_discriminator import Discriminator
-from torch import nn
-from core.ppo import ppo_step
-from core.common import estimate_advantages
-from core.agent import Agent
-
+from algorithms.core.mlp_policy import Policy
+from algorithms.core.mlp_critic import Value
+from algorithms.core.mlp_policy_disc import DiscretePolicy
+from algorithms.core.mlp_discriminator import Discriminator
+from algorithms.core.ppo import ppo_step
+from algorithms.core.common import estimate_advantages
+from algorithms.core.agent import Agent
 
 parser = argparse.ArgumentParser(description='PyTorch GAIL example')
 parser.add_argument('--env-name', default="hit_ball_with_queue-state-v0", metavar='G',
