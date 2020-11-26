@@ -32,12 +32,12 @@ dtype = torch.float64
 torch.set_default_dtype(dtype)
 device = torch.device('cuda', index=1)
 
-env = gym.make(args.env_name, render_mode='human')
+env = gym.make(args.env_name, render_mode='human', observation_mode=args.mode)
 
 """seeding"""
-#np.random.seed(args.seed)
-#torch.manual_seed(args.seed)
-#env.seed(args.seed)
+np.random.seed(args.seed)
+torch.manual_seed(args.seed)
+env.seed(args.seed)
 
 """define actor and critic"""
 policy, _, _ = pickle.load(open(os.path.join(assets_dir(), 'learned_models/{}.p'.format(args.weights_location)), 'rb'))
@@ -46,26 +46,33 @@ def main_loop():
     num_pressed = 0
     with torch.no_grad():
         for i_iter in range(args.max_iter_num):
-            seed = torch.randint(0, 1, (1,)).item()
+            # seed = torch.randint(0, 1, (1,)).item()
             #np.random.seed(seed)
             state = env.reset()
             done = False
             i_step = 0
             while not done and i_step < 100:
                 if args.mode == 'vision':
-                    # from IPython import embed; embed()
-                    # state_var = (tensor(state['state']).unsqueeze(0), tensor(state['front_rgb']).permute(2, 1, 0).unsqueeze(0).type(dtype))
-                    # from IPython import embed; embed()
                     state_var = (tensor(state['front_rgb']).permute(2, 1, 0).unsqueeze(0).type(dtype))
-                    # from IPython import embed; embed
                     action = policy(state_var)[0][0].numpy()
                 else:
+                    # Via some experimentation, we've found that trying to do 
+                    # Imitation Learning on the full 80-dimensional observation that's
+                    # returned by default does not work.
+                    # Instead, we only need 3 quantities:
+                    # (gripper_open, gripper_pose and task_low_dim_state)
+                    state_var = tensor(state) # <- this is 80-dimensional
+                    gripper_open = state_var[0].unsqueeze(0) # <- 1 dimensional
+                    gripper_pose = state_var[22:29] # <- 7 dimensional
+                    task_low_dim_state = state_var[37:] # <- IMPORTANT: for push_button, this is 43 dims, but it may be different for other tasks. Maybe find a way to nicely engineer this in?
                     # from IPython import embed; embed()
-                    state_var = tensor(state).unsqueeze(0)
-                    action = policy(state_var)[0][0].numpy()
+                    problem_state = torch.cat((gripper_open, gripper_pose, task_low_dim_state))
+                    problem_state = problem_state.unsqueeze(0)
+                    # problem_state = state_var[:51].unsqueeze(0).random_(0,1)
+                    action = policy(problem_state)[0][0].numpy()
 
                 try:
-                    print(action)
+                    # print(action)
                     state, _, done, _ = env.step(action)
                 except Exception:
                     # print('Action output from your model was nonsensical - RIP')
@@ -75,5 +82,9 @@ def main_loop():
             num_pressed += int(done)
             print('successfully pressed %d of %d' % (num_pressed, i_iter+1), end='\r')
     print('successfully pressed %d of %d      ' % (num_pressed, args.max_iter_num))
+    env.close()
 
 main_loop()
+
+# Sample command:
+# python algorithms/evaluation/eval_model.py --env-name push_button-state-v0 --max-iter-num 10 --weights-location push_button-state-v0-state-v0_latest_model_seanparams/60250 --mode state

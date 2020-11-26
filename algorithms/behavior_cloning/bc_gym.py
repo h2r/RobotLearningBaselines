@@ -108,11 +108,22 @@ def key(x):
 expert_traj = [sorted(glob(paths+'/*'), key=key) for paths in glob(args.expert_traj_path+'/*')]
 expert_traj = [[pickle.load(open(path, mode='rb')) for path in paths] for paths in expert_traj]
 
-state_dim = expert_traj[0][0].get_low_dim_data().shape[0]
+# Via some experimentation, we've found that trying to do 
+# Imitation Learning on the full 80-dimensional observation that's
+# returned by default does not work.
+# Instead, we only need 3 quantities:
+# (gripper_open, gripper_pose and task_low_dim_state)
+state_dim = np.array([expert_traj[0][0].gripper_open]).shape[0] + expert_traj[0][0].gripper_pose.shape[0] + \
+    expert_traj[0][0].task_low_dim_state.shape[0]
 action_dim = np.hstack([expert_traj[0][0].gripper_pose, expert_traj[0][0].gripper_open]).shape[0]
 
-expert_traj = [[[obs.get_low_dim_data(), obs.gripper_pose, obs.gripper_open] for obs in traj] for traj in expert_traj]
-expert_traj = [np.hstack([traj[i][0], pose_dif(traj[i+min(2, len(traj)-i-1)][1], traj[i][1]), traj[i+min(2, len(traj)-i-1)][2]]) for traj in expert_traj for i in range(len(traj))]
+# The first three elements are needed for the state, and the second two for the action.
+
+e_traj = [[[np.concatenate((np.array([obs.gripper_open]), obs.gripper_pose, obs.task_low_dim_state),axis=0), \
+    obs.gripper_pose, obs.gripper_open] for obs in traj] for traj in expert_traj]
+# from IPython import embed; embed()
+expert_traj = [np.hstack([traj[i][0], pose_dif(traj[i+min(2, len(traj)-i-1)][1], traj[i][1]), traj[i+min(2, len(traj)-i-1)][2]])\
+    for traj in e_traj for i in range(len(traj))]
 #expert_traj = [np.hstack([traj[i][0], traj[i+min(3, len(traj)-i-1)][1], traj[i+min(3, len(traj)-i-1)][2]]) for traj in expert_traj for i in range(len(traj))]
 expert_traj = np.vstack(expert_traj)
 expert_traj = torch.from_numpy(expert_traj).type(dtype)
@@ -120,9 +131,6 @@ train_data = expert_traj[:-1*expert_traj.shape[0]//10]
 test_data  = expert_traj[-1*expert_traj.shape[0]//10:]
 print(train_data.shape[0])
 print(test_data.shape[0])
-
-#print(expert_traj.mean(dim=0))
-#print(expert_traj.std(dim=0))
 
 """seeding"""
 np.random.seed(args.seed)
@@ -135,7 +143,7 @@ criterion = BehaviorCloneLoss(args.lambda_l2, args.lambda_l1, args.lambda_c, arg
 to_device(device, policy_net)
 
 optimizer_policy = torch.optim.Adam(policy_net.parameters(), lr=args.learning_rate, weight_decay=args.l2_reg)
-optimizer_scheduler = torch.optim.lr_scheduler.StepLR(optimizer_policy, 10000)
+optimizer_scheduler = torch.optim.lr_scheduler.StepLR(optimizer_policy, 5000)
 # optimizer_scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer_policy, 0.95)
 
 print(policy_net)
@@ -187,7 +195,9 @@ for i_iter in range(1, args.max_iter_num+1):
         pickle.dump((policy_net, {}, {}), open(os.path.join(assets_dir(), 'learned_models/{}_{}/{}.p'.format(args.env_name, args.version, i_iter)), 'wb'))
         to_device(device, policy_net)
 
-
     optimizer_scheduler.step()
     """clean up gpu memory"""
     torch.cuda.empty_cache()
+
+# Sample command: python algorithms/behavior_cloning/bc_gym.py --env-name push_button-state-v0 --expert-traj-path /home/nishanth/Desktop/rlbench_data/push_button/ --save-model-interval 250 --gpu-index 0 --max-iter-num 100000 --l2-reg 0.00005 --version latest_test -lc 0.0005 -l2 1 --l2-reg 0 -la 2
+# Last command run: python algorithms/behavior_cloning/bc_gym.py --env-name push_button-state-v0 --expert-traj-path /home/nishanth/Desktop/rlbench_data/push_button/ --save-model-interval 250 --gpu-index 0 --max-iter-num 100000 --l2-reg 0.00005 --version latest_test -lc 0.0005 -l2 1 --l2-reg 0 -la 2
