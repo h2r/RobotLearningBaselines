@@ -1,5 +1,6 @@
 # RobotLearningBaselines
 A repository containing algorithms + trained weights for common robot learning baselines. All the code here is intended to work out of the box so you can compare your fancy new method to SOTA right away! This repository is based on the amazing RLBench simulator.
+Note: the `trained_weights` folder contains files stored with [git LFS](https://git-lfs.github.com/), so make sure you install LFS correctly to pull and use these.
 
 # Quickstart guide
 ## Collecting a dataset
