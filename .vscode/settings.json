@@ -3,5 +3,5 @@
     "terminal.integrated.env.linux": {
 		"PATH": ""
 },
-"python.dataScience.jupyterServerURI": "local"
+"jupyter.jupyterServerType": "local"
 }
