@@ -1,4 +1,5 @@
 #RLBench files
+.vscode/
 h2r_rlbench_fork/
 assets/
 *.pkl
