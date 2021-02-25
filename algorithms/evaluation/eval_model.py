@@ -18,7 +18,7 @@ parser.add_argument('--env-name', default="push_button-state-v0", metavar='G',
 parser.add_argument('--mode', default="state", metavar='G',
                     help='name of the environment to run')
 parser.add_argument('--weights-location', default="bc", metavar='G',
-                    help='relative folder name within assets dir of weights to load')
+                    help='absolute folder location of weights to load')
 parser.add_argument('--seed', type=int, default=1, metavar='N',
                     help='random seed (default: 1)')
 parser.add_argument('--max-iter-num', type=int, default=500, metavar='N',
@@ -40,7 +40,7 @@ torch.manual_seed(args.seed)
 env.seed(args.seed)
 
 """define actor and critic"""
-policy, _, _ = pickle.load(open(os.path.join(assets_dir(), 'learned_models/{}.p'.format(args.weights_location)), 'rb'))
+policy, _, _ = pickle.load(open(args.weights_location, 'rb'))
 policy.eval()
 def main_loop():
     num_pressed = 0
@@ -65,17 +65,15 @@ def main_loop():
                     gripper_open = state_var[0].unsqueeze(0) # <- 1 dimensional
                     gripper_pose = state_var[22:29] # <- 7 dimensional
                     task_low_dim_state = state_var[37:] # <- IMPORTANT: for push_button, this is 43 dims, but it may be different for other tasks. Maybe find a way to nicely engineer this in?
-                    # from IPython import embed; embed()
                     problem_state = torch.cat((gripper_open, gripper_pose, task_low_dim_state))
                     problem_state = problem_state.unsqueeze(0)
-                    # problem_state = state_var[:51].unsqueeze(0).random_(0,1)
                     action = policy(problem_state)[0][0].numpy()
 
                 try:
                     # print(action)
                     state, _, done, _ = env.step(action)
                 except Exception:
-                    # print('Action output from your model was nonsensical - RIP')
+                    print('Action output from your model was nonsensical - RIP')
                     break
                 #env.render()
                 i_step += 1

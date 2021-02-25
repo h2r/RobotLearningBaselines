@@ -2,6 +2,10 @@
 A repository containing algorithms + trained weights for common robot learning baselines. All the code here is intended to work out of the box so you can compare your fancy new method to SOTA right away! This repository is based on the amazing RLBench simulator.
 Note: the `trained_weights` folder contains files stored with [git LFS](https://git-lfs.github.com/), so make sure you install LFS correctly to pull and use these.
 
+# ToDo's 
+- Create a `requirements.txt` file that enables easy running of all algorithms! Or perhaps a different file for each algorithm?
+- 
+
 # Quickstart guide
 ## Collecting a dataset
 1. The script to do this can be found under the `RLBench/tools/dataset_generator.py` folder (Note, the `RLBench` folder will exist only if you clone h2r's fork of the RLBench library. The fork can be found [here](https://github.com/h2r/RLBench)).

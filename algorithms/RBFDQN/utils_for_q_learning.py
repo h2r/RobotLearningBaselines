@@ -19,7 +19,7 @@ def action_checker(env):
 
 def get_hyper_parameters(name, alg):
 	meta_params = {}
-	with open(alg + "_hyper_parameters/" + name + ".hyper") as f:
+	with open("algorithms/RBFDQN/" + alg + "_hyper_parameters/" + name + ".hyper") as f:
 		lines = [line.rstrip('\n') for line in f]
 		for l in lines:
 			parameter_name, parameter_value, parameter_type = (l.split(','))
