@@ -20,6 +20,7 @@ Note: the `trained_weights` folder contains files stored with [git LFS](https://
 ## Evaluating and visualizing performance of trained weights
 1. Currently, the file being used for eval is `algorithms/evaluation/eval_model.py`
 2. Sample command: `python algorithms/evaluation/eval_model.py --env-name push_button-state-v0 --max-iter-num 10 --version state-v0_bc_button1000_newloss_16/3000`
+3. Evaluating RBFDQN by using following command: 'python3 algorithms/evaluation/evaluate-model.py 99 0'
 
 # ToDo's
 - Create a `requirements.txt` file at the root of the repo

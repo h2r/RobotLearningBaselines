@@ -4,7 +4,7 @@ import sys
 import time
 import numpy
 import random
-import utils_for_q_learning, buffer_class
+from algorithms.RBFDQN import utils_for_q_learning, buffer_class
 
 import torch
 import torch.nn as nn
