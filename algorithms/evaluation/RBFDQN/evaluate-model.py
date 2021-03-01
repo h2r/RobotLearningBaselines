@@ -8,7 +8,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 from algorithms.RBFDQN.reaching_Her_RBFDQN_joint import Net
 from algorithms.RBFDQN import utils_for_q_learning, buffer_class
 
