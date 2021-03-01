@@ -25,6 +25,7 @@ Note: the `trained_weights` folder contains files stored with [git LFS](https://
 # ToDo's
 - Create a `requirements.txt` file at the root of the repo
 - Create a test script that tests that there are no import errors with running existing algorithms.
+- Consolidate repo so that it's really easy to train/eval particular algorithms on different tasks by doing something like OpenAI baselines commands: `python eval rbfdqn reaching` or `python train behavior_cloning button_pressing`
 
 # Contribution Guide
 If you are a member of H2R that's contributing to RobotLearningBaselines, remember to **make your own fork** of the repo. When pull-requesting to merge back into the main fork, ensure the following are true:
