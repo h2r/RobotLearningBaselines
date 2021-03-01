@@ -20,3 +20,14 @@ Note: the `trained_weights` folder contains files stored with [git LFS](https://
 ## Evaluating and visualizing performance of trained weights
 1. Currently, the file being used for eval is `algorithms/evaluation/eval_model.py`
 2. Sample command: `python algorithms/evaluation/eval_model.py --env-name push_button-state-v0 --max-iter-num 10 --version state-v0_bc_button1000_newloss_16/3000`
+3. Evaluating RBFDQN by using following command: 'python3 algorithms/evaluation/evaluate-model.py 99 0'
+
+# ToDo's
+- Create a `requirements.txt` file at the root of the repo
+- Create a test script that tests that there are no import errors with running existing algorithms.
+
+# Contribution Guide
+If you are a member of H2R that's contributing to RobotLearningBaselines, remember to **make your own fork** of the repo. When pull-requesting to merge back into the main fork, ensure the following are true:
+1. You have updated the `requirements.txt` file at the root of the directory with any packages necessary to run your new algorithm. Additionally, you have checked that these updates don't break any of the tests for previous algorithms
+2. Code for your new algorithm lives under the `algorithms/` folder of the repository and can be run correctly from the root of the repository
+3. Any trained weights live inside a subfolder under the `trained_weights` folder of the repository.
