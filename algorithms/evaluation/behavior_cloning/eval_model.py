@@ -8,7 +8,7 @@ import time
 from glob import glob
 import math
 import pdb
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
 from utils import *
 
 parser = argparse.ArgumentParser(description='PyTorch GAIL example')
@@ -32,7 +32,7 @@ dtype = torch.float64
 torch.set_default_dtype(dtype)
 device = torch.device('cuda', index=1)
 
-env = gym.make(args.env_name, render_mode='human', observation_mode=args.mode)
+env = gym.make(args.env_name, render_mode='human', observation_mode=args.mode, arm_action_mode='delta_ee_pose_world_frame')
 
 """seeding"""
 np.random.seed(args.seed)
