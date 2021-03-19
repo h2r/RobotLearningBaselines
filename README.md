@@ -23,7 +23,6 @@ Note: the `trained_weights` folder contains files stored with [git LFS](https://
 3. Evaluating RBFDQN by using following command: `python3 algorithms/evaluation/RBFDQN/evaluate-model.py 99 0`
 
 # ToDo's
-- Create a `requirements.txt` file at the root of the repo
 - Create a test script that tests that there are no import errors with running existing algorithms.
 - Consolidate repo so that it's really easy to train/eval particular algorithms on different tasks by doing something like OpenAI baselines commands: `python eval rbfdqn reaching` or `python train behavior_cloning button_pressing`
 
